@@ -33,10 +33,10 @@ namespace dt {
 
 		dope::Index<DIM> order;
 
-		for (dope::SizeType d = static_cast<dope::SizeType>(0); d < DIM; ++d) {
+		for (dope::SizeType d = DIM; d > static_cast<dope::SizeType>(0); --d) {
 			// permute rotate
 			for (dope::SizeType o = static_cast<dope::SizeType>(0); o < DIM; ++o)
-				order[o] = (d + o) % DIM;
+				order[o] = (d - 1 + o) % DIM;
 			dope::DopeVector<Scalar, DIM> tmpF_rotated = tmpF.permute(order);
 			dope::DopeVector<Scalar, DIM> tmpD_rotated = tmpD.permute(order);
 
@@ -83,7 +83,7 @@ namespace dt {
 			element_wiseSquareRoot(D);
 	}
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGB, 2> &f, dope::DopeVector<RGB, 2> &D, const bool squared, const std::size_t nThreads)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGB, 2> &f, dope::DopeVector<fRGB, 2> &D, const bool squared, const std::size_t nThreads)
 	{
 		dope::Index2 fSize, DSize;
 		fSize = f.allSizes();
@@ -91,22 +91,22 @@ namespace dt {
 		if (DSize != fSize)
 			throw std::out_of_range("Matrixes do not have same size.");
 
-		dope::Grid<RGB, 2> fCopy(fSize);
+		dope::Grid<fRGB, 2> fCopy(fSize);
 		fCopy.import(f);
-		dope::Grid<RGB, 2> DCopy(DSize);
+		dope::Grid<fRGB, 2> DCopy(DSize);
 
-		dope::DopeVector<RGB, 2> tmpF(fCopy);
-		dope::DopeVector<RGB, 2> tmpD(DCopy);
+		dope::DopeVector<fRGB, 2> tmpF(fCopy);
+		dope::DopeVector<fRGB, 2> tmpD(DCopy);
 
 		dope::Index2 order;
 
-		for (dope::SizeType d = static_cast<dope::SizeType>(0); d < 2; ++d) {
+		for (dope::SizeType d = 2; d > static_cast<dope::SizeType>(0); --d) {
 			// permute rotate
 			for (dope::SizeType o = static_cast<dope::SizeType>(0); o < 2; ++o)
-				order[o] = (d + o) % 2;
+				order[o] = (d - 1 + o) % 2;
 
-			dope::DopeVector<RGB, 2> tmpF_rotated = tmpF.permute(order);
-			dope::DopeVector<RGB, 2> tmpD_rotated = tmpD.permute(order);
+			dope::DopeVector<fRGB, 2> tmpF_rotated = tmpF.permute(order);
+			dope::DopeVector<fRGB, 2> tmpD_rotated = tmpD.permute(order);
 
 
 			dope::Index2 winStart = dope::Index2::Zero(), winSize;
@@ -120,8 +120,8 @@ namespace dt {
 			std::size_t nWindows = winSize[0] / range + (winSize[0] % range != 0 ? 1 : 0);
 
 			if (nWindows > 1) {
-				std::vector<dope::DopeVector<RGB, 2>> tmpWindowsF(nWindows);
-				std::vector<dope::DopeVector<RGB, 2>> tmpWindowsD(nWindows);
+				std::vector<dope::DopeVector<fRGB, 2>> tmpWindowsF(nWindows);
+				std::vector<dope::DopeVector<fRGB, 2>> tmpWindowsD(nWindows);
 				std::vector<std::thread> threads(nWindows);
 
 				for (std::size_t i = 0; i < nWindows; ++i) {
@@ -131,7 +131,7 @@ namespace dt {
 					tmpWindowsD.at(i) = tmpD_rotated.window(winStart, winSize);
 					winStart[0] = 0;
 					winSize[0] = tmpF_rotated.sizeAt(0);
-					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<RGB, 2> &, dope::DopeVector<RGB, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)));
+					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<fRGB, 2> &, dope::DopeVector<fRGB, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)));
 				}
 				for (std::size_t i = 0; i < nWindows; ++i)
 					threads.at(i).join();
@@ -151,7 +151,7 @@ namespace dt {
 	}
 
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGBA, 2> &f, dope::DopeVector<RGBA, 2> &D, const bool squared, const std::size_t nThreads)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGBA, 2> &f, dope::DopeVector<fRGBA, 2> &D, const bool squared, const std::size_t nThreads)
 	{
 		dope::Index2 fSize, DSize;
 		fSize = f.allSizes();
@@ -159,22 +159,22 @@ namespace dt {
 		if (DSize != fSize)
 			throw std::out_of_range("Matrixes do not have same size.");
 
-		dope::Grid<RGBA, 2> fCopy(fSize);
+		dope::Grid<fRGBA, 2> fCopy(fSize);
 		fCopy.import(f);
-		dope::Grid<RGBA, 2> DCopy(DSize);
+		dope::Grid<fRGBA, 2> DCopy(DSize);
 
-		dope::DopeVector<RGBA, 2> tmpF(fCopy);
-		dope::DopeVector<RGBA, 2> tmpD(DCopy);
+		dope::DopeVector<fRGBA, 2> tmpF(fCopy);
+		dope::DopeVector<fRGBA, 2> tmpD(DCopy);
 
 		dope::Index2 order;
 
-		for (dope::SizeType d = static_cast<dope::SizeType>(0); d < 2; ++d) {
+		for (dope::SizeType d = 2; d > static_cast<dope::SizeType>(0); --d) {
 			// permute rotate
 			for (dope::SizeType o = static_cast<dope::SizeType>(0); o < 2; ++o)
-				order[o] = (d + o) % 2;
+				order[o] = (d - 1 + o) % 2;
 
-			dope::DopeVector<RGBA, 2> tmpF_rotated = tmpF.permute(order);
-			dope::DopeVector<RGBA, 2> tmpD_rotated = tmpD.permute(order);
+			dope::DopeVector<fRGBA, 2> tmpF_rotated = tmpF.permute(order);
+			dope::DopeVector<fRGBA, 2> tmpD_rotated = tmpD.permute(order);
 
 
 			dope::Index2 winStart = dope::Index2::Zero(), winSize;
@@ -188,8 +188,8 @@ namespace dt {
 			std::size_t nWindows = winSize[0] / range + (winSize[0] % range != 0 ? 1 : 0);
 
 			if (nWindows > 1) {
-				std::vector<dope::DopeVector<RGBA, 2>> tmpWindowsF(nWindows);
-				std::vector<dope::DopeVector<RGBA, 2>> tmpWindowsD(nWindows);
+				std::vector<dope::DopeVector<fRGBA, 2>> tmpWindowsF(nWindows);
+				std::vector<dope::DopeVector<fRGBA, 2>> tmpWindowsD(nWindows);
 				std::vector<std::thread> threads(nWindows);
 
 				for (std::size_t i = 0; i < nWindows; ++i) {
@@ -199,7 +199,7 @@ namespace dt {
 					tmpWindowsD.at(i) = tmpD_rotated.window(winStart, winSize);
 					winStart[0] = 0;
 					winSize[0] = tmpF_rotated.sizeAt(0);
-					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<RGBA, 2> &, dope::DopeVector<RGBA, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)));
+					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<fRGBA, 2> &, dope::DopeVector<fRGBA, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)));
 				}
 				for (std::size_t i = 0; i < nWindows; ++i)
 					threads.at(i).join();
@@ -233,7 +233,7 @@ namespace dt {
 			element_wiseSquareRoot(D);
 	}
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGB, 1> &f, dope::DopeVector<RGB, 1> &D, const bool squared, const std::size_t)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGB, 1> &f, dope::DopeVector<fRGB, 1> &D, const bool squared, const std::size_t)
 	{
 		dope::Index1 fSize, DSize;
 		fSize = f.allSizes();
@@ -247,7 +247,7 @@ namespace dt {
 			element_wiseSquareRoot(D);
 	}
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGBA, 1> &f, dope::DopeVector<RGBA, 1> &D, const bool squared, const std::size_t)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGBA, 1> &f, dope::DopeVector<fRGBA, 1> &D, const bool squared, const std::size_t)
 	{
 		dope::Index1 fSize, DSize;
 		fSize = f.allSizes();
@@ -284,10 +284,10 @@ namespace dt {
 
 		dope::Index<DIM> order;
 
-		for (dope::SizeType d = static_cast<dope::SizeType>(0); d < DIM; ++d) {
+		for (dope::SizeType d = DIM; d > static_cast<dope::SizeType>(0); --d) {
 			// permute rotate
 			for (dope::SizeType o = static_cast<dope::SizeType>(0); o < DIM; ++o)
-				order[o] = (d + o) % DIM;
+				order[o] = (d - 1 + o) % DIM;
 			dope::DopeVector<Scalar, DIM> tmpF_rotated = tmpF.permute(order);
 			dope::DopeVector<Scalar, DIM> tmpD_rotated = tmpD.permute(order);
 			dope::DopeVector<dope::SizeType, DIM> Ipre_rotated = Ipre.permute(order);
@@ -343,7 +343,7 @@ namespace dt {
 			element_wiseSquareRoot(D);
 	}
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGB, 2> &f, dope::DopeVector<RGB, 2> &D, dope::DopeVector<dope::SizeType, 2> &I, const bool squared, const std::size_t nThreads)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGB, 2> &f, dope::DopeVector<fRGB, 2> &D, dope::DopeVector<dope::SizeType, 2> &I, const bool squared, const std::size_t nThreads)
 	{
 		dope::Index2 fSize, DSize, ISize;
 		fSize = f.allSizes();
@@ -352,26 +352,26 @@ namespace dt {
 		if (DSize != fSize || ISize != fSize)
 			throw std::out_of_range("Matrixes do not have same size.");
 
-		dope::Grid<RGB, 2> fCopy(fSize);
+		dope::Grid<fRGB, 2> fCopy(fSize);
 		fCopy.import(f);
-		dope::Grid<RGB, 2> DCopy(DSize);
+		dope::Grid<fRGB, 2> DCopy(DSize);
 		dope::Grid<dope::SizeType, 2> ICopyPre(ISize), ICopyPost(ISize);
 		ICopyPre.import(I);
 
-		dope::DopeVector<RGB, 2> tmpF(fCopy);
-		dope::DopeVector<RGB, 2> tmpD(D);
+		dope::DopeVector<fRGB, 2> tmpF(fCopy);
+		dope::DopeVector<fRGB, 2> tmpD(D);
 		dope::DopeVector<dope::SizeType, 2> Ipre(ICopyPre);
 		dope::DopeVector<dope::SizeType, 2> Ipost(ICopyPost);
 
 		dope::Index2 order;
 
-		for (dope::SizeType d = static_cast<dope::SizeType>(0); d < 2; ++d) {
+		for (dope::SizeType d = 2; d > static_cast<dope::SizeType>(0); --d) {
 			// permute rotate
 			for (dope::SizeType o = static_cast<dope::SizeType>(0); o < 2; ++o)
-				order[o] = (d + o) % 2;
+				order[o] = (d - 1 + o) % 2;
 
-			dope::DopeVector<RGB, 2> tmpF_rotated = tmpF.permute(order);
-			dope::DopeVector<RGB, 2> tmpD_rotated = tmpD.permute(order);
+			dope::DopeVector<fRGB, 2> tmpF_rotated = tmpF.permute(order);
+			dope::DopeVector<fRGB, 2> tmpD_rotated = tmpD.permute(order);
 			dope::DopeVector<dope::SizeType, 2> Ipre_rotated = Ipre.permute(order);
 			dope::DopeVector<dope::SizeType, 2> Ipost_rotated = Ipost.permute(order);
 
@@ -386,8 +386,8 @@ namespace dt {
 			std::size_t nWindows = winSize[0] / range + (winSize[0] % range != 0 ? 1 : 0);
 
 			if (nWindows > 1) {
-				std::vector<dope::DopeVector<RGB, 2>> tmpWindowsF(nWindows);
-				std::vector<dope::DopeVector<RGB, 2>> tmpWindowsD(nWindows);
+				std::vector<dope::DopeVector<fRGB, 2>> tmpWindowsF(nWindows);
+				std::vector<dope::DopeVector<fRGB, 2>> tmpWindowsD(nWindows);
 				std::vector<dope::DopeVector<dope::SizeType, 2>> tmpWindowsIPre(nWindows);
 				std::vector<dope::DopeVector<dope::SizeType, 2>> tmpWindowsIPost(nWindows);
 				std::vector<std::thread> threads(nWindows);
@@ -401,7 +401,7 @@ namespace dt {
 					tmpWindowsIPost.at(i) = Ipost_rotated.window(winStart, winSize);
 					winStart[0] = 0;
 					winSize[0] = tmpF_rotated.sizeAt(0);
-					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<RGB, 2> &, dope::DopeVector<RGB, 2> &, const dope::DopeVector<dope::SizeType, 2> &, dope::DopeVector<dope::SizeType, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)), std::cref(tmpWindowsIPre.at(i)), std::ref(tmpWindowsIPost.at(i)));
+					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<fRGB, 2> &, dope::DopeVector<fRGB, 2> &, const dope::DopeVector<dope::SizeType, 2> &, dope::DopeVector<dope::SizeType, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)), std::cref(tmpWindowsIPre.at(i)), std::ref(tmpWindowsIPost.at(i)));
 				}
 				for (std::size_t i = 0; i < nWindows; ++i)
 					threads.at(i).join();
@@ -424,7 +424,7 @@ namespace dt {
 			element_wiseSquareRoot(D);
 	}
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGBA, 2> &f, dope::DopeVector<RGBA, 2> &D, dope::DopeVector<dope::SizeType, 2> &I, const bool squared, const std::size_t nThreads)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGBA, 2> &f, dope::DopeVector<fRGBA, 2> &D, dope::DopeVector<dope::SizeType, 2> &I, const bool squared, const std::size_t nThreads)
 	{
 		dope::Index2 fSize, DSize, ISize;
 		fSize = f.allSizes();
@@ -433,26 +433,26 @@ namespace dt {
 		if (DSize != fSize || ISize != fSize)
 			throw std::out_of_range("Matrixes do not have same size.");
 
-		dope::Grid<RGBA, 2> fCopy(fSize);
+		dope::Grid<fRGBA, 2> fCopy(fSize);
 		fCopy.import(f);
-		dope::Grid<RGBA, 2> DCopy(DSize);
+		dope::Grid<fRGBA, 2> DCopy(DSize);
 		dope::Grid<dope::SizeType, 2> ICopyPre(ISize), ICopyPost(ISize);
 		ICopyPre.import(I);
 
-		dope::DopeVector<RGBA, 2> tmpF(fCopy);
-		dope::DopeVector<RGBA, 2> tmpD(D);
+		dope::DopeVector<fRGBA, 2> tmpF(fCopy);
+		dope::DopeVector<fRGBA, 2> tmpD(D);
 		dope::DopeVector<dope::SizeType, 2> Ipre(ICopyPre);
 		dope::DopeVector<dope::SizeType, 2> Ipost(ICopyPost);
 
 		dope::Index2 order;
 
-		for (dope::SizeType d = static_cast<dope::SizeType>(0); d < 2; ++d) {
+		for (dope::SizeType d = 2; d > static_cast<dope::SizeType>(0); --d) {
 			// permute rotate
 			for (dope::SizeType o = static_cast<dope::SizeType>(0); o < 2; ++o)
-				order[o] = (d + o) % 2;
+				order[o] = (d - 1 + o) % 2;
 
-			dope::DopeVector<RGBA, 2> tmpF_rotated = tmpF.permute(order);
-			dope::DopeVector<RGBA, 2> tmpD_rotated = tmpD.permute(order);
+			dope::DopeVector<fRGBA, 2> tmpF_rotated = tmpF.permute(order);
+			dope::DopeVector<fRGBA, 2> tmpD_rotated = tmpD.permute(order);
 			dope::DopeVector<dope::SizeType, 2> Ipre_rotated = Ipre.permute(order);
 			dope::DopeVector<dope::SizeType, 2> Ipost_rotated = Ipost.permute(order);
 
@@ -467,8 +467,8 @@ namespace dt {
 			std::size_t nWindows = winSize[0] / range + (winSize[0] % range != 0 ? 1 : 0);
 
 			if (nWindows > 1) {
-				std::vector<dope::DopeVector<RGBA, 2>> tmpWindowsF(nWindows);
-				std::vector<dope::DopeVector<RGBA, 2>> tmpWindowsD(nWindows);
+				std::vector<dope::DopeVector<fRGBA, 2>> tmpWindowsF(nWindows);
+				std::vector<dope::DopeVector<fRGBA, 2>> tmpWindowsD(nWindows);
 				std::vector<dope::DopeVector<dope::SizeType, 2>> tmpWindowsIPre(nWindows);
 				std::vector<dope::DopeVector<dope::SizeType, 2>> tmpWindowsIPost(nWindows);
 				std::vector<std::thread> threads(nWindows);
@@ -482,7 +482,7 @@ namespace dt {
 					tmpWindowsIPost.at(i) = Ipost_rotated.window(winStart, winSize);
 					winStart[0] = 0;
 					winSize[0] = tmpF_rotated.sizeAt(0);
-					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<RGBA, 2> &, dope::DopeVector<RGBA, 2> &, const dope::DopeVector<dope::SizeType, 2> &, dope::DopeVector<dope::SizeType, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)), std::cref(tmpWindowsIPre.at(i)), std::ref(tmpWindowsIPost.at(i)));
+					threads.at(i) = std::thread(static_cast<void(*)(const dope::DopeVector<fRGBA, 2> &, dope::DopeVector<fRGBA, 2> &, const dope::DopeVector<dope::SizeType, 2> &, dope::DopeVector<dope::SizeType, 2> &)>(&distanceL2Helper), std::cref(tmpWindowsF.at(i)), std::ref(tmpWindowsD.at(i)), std::cref(tmpWindowsIPre.at(i)), std::ref(tmpWindowsIPost.at(i)));
 				}
 				for (std::size_t i = 0; i < nWindows; ++i)
 					threads.at(i).join();
@@ -521,7 +521,7 @@ namespace dt {
 			element_wiseSquareRoot(D);
 	}
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGB, 1> &f, dope::DopeVector<RGB, 1> &D, dope::DopeVector<dope::SizeType, 1> &I, const bool squared, const std::size_t)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGB, 1> &f, dope::DopeVector<fRGB, 1> &D, dope::DopeVector<dope::SizeType, 1> &I, const bool squared, const std::size_t)
 	{
 		dope::Index1 fSize, DSize, ISize;
 		fSize = f.allSizes();
@@ -536,7 +536,7 @@ namespace dt {
 			element_wiseSquareRoot(D);
 	}
 
-	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<RGBA, 1> &f, dope::DopeVector<RGBA, 1> &D, dope::DopeVector<dope::SizeType, 1> &I, const bool squared, const std::size_t)
+	inline void DistanceTransform::distanceTransformL2(const dope::DopeVector<fRGBA, 1> &f, dope::DopeVector<fRGBA, 1> &D, dope::DopeVector<dope::SizeType, 1> &I, const bool squared, const std::size_t)
 	{
 		dope::Index1 fSize, DSize, ISize;
 		fSize = f.allSizes();
@@ -585,10 +585,10 @@ namespace dt {
 	}
 
 
-	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<RGB, 2> &f, dope::DopeVector<RGB, 2> &D)
+	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<fRGB, 2> &f, dope::DopeVector<fRGB, 2> &D)
 	{
-		dope::DopeVector<RGB, 1> f_dq;
-		dope::DopeVector<RGB, 1> D_dq;
+		dope::DopeVector<fRGB, 1> f_dq;
+		dope::DopeVector<fRGB, 1> D_dq;
 
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 			f.slice(0, q, f_dq);
@@ -597,10 +597,10 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<RGBA, 2> &f, dope::DopeVector<RGBA, 2> &D)
+	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<fRGBA, 2> &f, dope::DopeVector<fRGBA, 2> &D)
 	{
-		dope::DopeVector<RGBA, 1> f_dq;
-		dope::DopeVector<RGBA, 1> D_dq;
+		dope::DopeVector<fRGBA, 1> f_dq;
+		dope::DopeVector<fRGBA, 1> D_dq;
 
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 			f.slice(0, q, f_dq);
@@ -623,9 +623,9 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGB, 2> &f, dope::DopeVector<RGB, 2> &D)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGB, 2> &f, dope::DopeVector<fRGB, 2> &D)
 	{
-		dope::DopeVector<RGB, 1> f_q, D_q;
+		dope::DopeVector<fRGB, 1> f_q, D_q;
 		// compute distance at lower dimensions for each hyperplane
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 			f.at(q, f_q);
@@ -634,9 +634,9 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGBA, 2> &f, dope::DopeVector<RGBA, 2> &D)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGBA, 2> &f, dope::DopeVector<fRGBA, 2> &D)
 	{
-		dope::DopeVector<RGBA, 1> f_q, D_q;
+		dope::DopeVector<fRGBA, 1> f_q, D_q;
 		// compute distance at lower dimensions for each hyperplane
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 			f.at(q, f_q);
@@ -662,20 +662,22 @@ namespace dt {
 		double s = double(0);
 		// initialization
 		v[0] = static_cast<dope::SizeType>(0);
-		z[0] = -std::numeric_limits<double>::max();
-		z[1] = std::numeric_limits<double>::max();
+		z[0] = -std::numeric_limits<float>::max();
+		z[1] = +std::numeric_limits<float>::max();
 		// compute lowest envelope:
 		for (dope::SizeType q = static_cast<dope::SizeType>(1); q < f.sizeAt(0); ++q) {
 			++k;    // this compensates for first line of next do-while block
+			
 			do {
 				--k;
 				// compute horizontal position of intersection between the parabola from q and the current lowest parabola
 				s = ((f[q] + q*q) - static_cast<double>(f[v[k]] + v[k]*v[k])) / (2*q - static_cast<double>(2*v[k]));
 			} while (s <= z[k]);
+
 			++k;
 			v[k] = q;
 			z[k] = s;
-			z[k+1] = std::numeric_limits<double>::max();
+			z[k+1] = +std::numeric_limits<float>::max();
 		}
 		// fill in values of distance transform
 		k = static_cast<dope::SizeType>(0);
@@ -689,7 +691,7 @@ namespace dt {
 		delete[] v;
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGB, 1> &f, dope::DopeVector<RGB, 1> &D)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGB, 1> &f, dope::DopeVector<fRGB, 1> &D)
 	{
 		if (f.sizeAt(0) == static_cast<dope::SizeType>(0) || f.sizeAt(0) > D.sizeAt(0))
 			return;
@@ -706,6 +708,7 @@ namespace dt {
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < static_cast<dope::SizeType>(3); ++i)
 		{
 			s = 0.0;
+			k = static_cast<dope::SizeType>(0);
 			v[0] = static_cast<dope::SizeType>(0);
 			z[0] = -std::numeric_limits<double>::max();
 			z[1] = std::numeric_limits<double>::max();
@@ -727,7 +730,10 @@ namespace dt {
 			for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 				while (z[k + 1] < static_cast<double>(q))
 					++k;
-				D[q][i] = f[v[k]][i] + (q - static_cast<unsigned char>(v[k]))*(q - static_cast<unsigned char>(v[k]));
+				
+				const float &np = f[v[k]][i];
+				float &dp = D[q][i];
+				dp = np + (q - static_cast<float>(v[k]))*(q - static_cast<float>(v[k]));
 			}
 		}
 		// delete allocated memory
@@ -735,7 +741,7 @@ namespace dt {
 		delete[] v;
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGBA, 1> &f, dope::DopeVector<RGBA, 1> &D)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGBA, 1> &f, dope::DopeVector<fRGBA, 1> &D)
 	{
 		if (f.sizeAt(0) == static_cast<dope::SizeType>(0) || f.sizeAt(0) > D.sizeAt(0))
 			return;
@@ -752,6 +758,7 @@ namespace dt {
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < static_cast<dope::SizeType>(4); ++i)
 		{
 			s = 0.0;
+			k = static_cast<dope::SizeType>(0);
 			v[0] = static_cast<dope::SizeType>(0);
 			z[0] = -std::numeric_limits<double>::max();
 			z[1] = std::numeric_limits<double>::max();
@@ -773,7 +780,7 @@ namespace dt {
 			for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 				while (z[k + 1] < static_cast<double>(q))
 					++k;
-				D[q][i] = f[v[k]][i] + (q - static_cast<unsigned char>(v[k]))*(q - static_cast<unsigned char>(v[k]));
+				D[q][i] = f[v[k]][i] + (q - static_cast<float>(v[k]))*(q - static_cast<float>(v[k]));
 			}
 		}
 		// delete allocated memory
@@ -799,10 +806,10 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<RGB, 2> &f, dope::DopeVector<RGB, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
+	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<fRGB, 2> &f, dope::DopeVector<fRGB, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
 	{
-		dope::DopeVector<RGB, 1> f_dq;
-		dope::DopeVector<RGB, 1> D_dq;
+		dope::DopeVector<fRGB, 1> f_dq;
+		dope::DopeVector<fRGB, 1> D_dq;
 		dope::DopeVector<dope::SizeType, 1> Ipre_dq;
 		dope::DopeVector<dope::SizeType, 1> Ipost_dq;
 
@@ -815,10 +822,10 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<RGBA, 2> &f, dope::DopeVector<RGBA, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
+	inline void DistanceTransform::distanceL2Helper(const dope::DopeVector<fRGBA, 2> &f, dope::DopeVector<fRGBA, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
 	{
-		dope::DopeVector<RGBA, 1> f_dq;
-		dope::DopeVector<RGBA, 1> D_dq;
+		dope::DopeVector<fRGBA, 1> f_dq;
+		dope::DopeVector<fRGBA, 1> D_dq;
 		dope::DopeVector<dope::SizeType, 1> Ipre_dq;
 		dope::DopeVector<dope::SizeType, 1> Ipost_dq;
 
@@ -848,9 +855,9 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGB, 2> &f, dope::DopeVector<RGB, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGB, 2> &f, dope::DopeVector<fRGB, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
 	{
-		dope::DopeVector<RGB, 1> f_q, D_q;
+		dope::DopeVector<fRGB, 1> f_q, D_q;
 		dope::DopeVector<dope::SizeType, 1> Ipre_q, Ipost_q;
 		// compute distance at lower dimensions for each hyperplane
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
@@ -862,9 +869,9 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGBA, 2> &f, dope::DopeVector<RGBA, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGBA, 2> &f, dope::DopeVector<fRGBA, 2> &D, const dope::DopeVector<dope::SizeType, 2> &Ipre, dope::DopeVector<dope::SizeType, 2> &Ipost)
 	{
-		dope::DopeVector<RGBA, 1> f_q, D_q;
+		dope::DopeVector<fRGBA, 1> f_q, D_q;
 		dope::DopeVector<dope::SizeType, 1> Ipre_q, Ipost_q;
 		// compute distance at lower dimensions for each hyperplane
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
@@ -922,7 +929,7 @@ namespace dt {
 		delete[] v;
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGB, 1> &f, dope::DopeVector<RGB, 1> &D, const dope::DopeVector<dope::SizeType, 1> &Ipre, dope::DopeVector<dope::SizeType, 1> &Ipost)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGB, 1> &f, dope::DopeVector<fRGB, 1> &D, const dope::DopeVector<dope::SizeType, 1> &Ipre, dope::DopeVector<dope::SizeType, 1> &Ipost)
 	{
 		if (f.sizeAt(0) == static_cast<dope::SizeType>(0) || f.sizeAt(0) > D.sizeAt(0))
 			return;
@@ -940,6 +947,7 @@ namespace dt {
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < static_cast<dope::SizeType>(3); ++i)
 		{
 			s = 0.0;
+			k = static_cast<dope::SizeType>(0);
 			v[0] = static_cast<dope::SizeType>(0);
 			z[0] = -std::numeric_limits<double>::max();
 			z[1] = std::numeric_limits<double>::max();
@@ -961,7 +969,7 @@ namespace dt {
 			for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 				while (z[k + 1] < static_cast<double>(q))
 					++k;
-				D[q][i] = f[v[k]][i] + (q - static_cast<unsigned char>(v[k]))*(q - static_cast<unsigned char>(v[k]));
+				D[q][i] = f[v[k]][i] + (q - static_cast<float>(v[k]))*(q - static_cast<float>(v[k]));
 				Ipost[q] = Ipre[v[k]];
 			}
 		}
@@ -970,7 +978,7 @@ namespace dt {
 		delete[] v;
 	}
 
-	inline void DistanceTransform::distanceL2(const dope::DopeVector<RGBA, 1> &f, dope::DopeVector<RGBA, 1> &D, const dope::DopeVector<dope::SizeType, 1> &Ipre, dope::DopeVector<dope::SizeType, 1> &Ipost)
+	inline void DistanceTransform::distanceL2(const dope::DopeVector<fRGBA, 1> &f, dope::DopeVector<fRGBA, 1> &D, const dope::DopeVector<dope::SizeType, 1> &Ipre, dope::DopeVector<dope::SizeType, 1> &Ipost)
 	{
 		if (f.sizeAt(0) == static_cast<dope::SizeType>(0) || f.sizeAt(0) > D.sizeAt(0))
 			return;
@@ -988,6 +996,7 @@ namespace dt {
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < static_cast<dope::SizeType>(4); ++i)
 		{
 			s = 0.0;
+			k = static_cast<dope::SizeType>(0);
 			v[0] = static_cast<dope::SizeType>(0);
 			z[0] = -std::numeric_limits<double>::max();
 			z[1] = std::numeric_limits<double>::max();
@@ -1009,7 +1018,7 @@ namespace dt {
 			for (dope::SizeType q = static_cast<dope::SizeType>(0); q < f.sizeAt(0); ++q) {
 				while (z[k + 1] < static_cast<double>(q))
 					++k;
-				D[q][i] = f[v[k]][i] + (q - static_cast<unsigned char>(v[k]))*(q - static_cast<unsigned char>(v[k]));
+				D[q][i] = f[v[k]][i] + (q - static_cast<float>(v[k]))*(q - static_cast<float>(v[k]));
 				Ipost[q] = Ipre[v[k]];
 			}
 		}
@@ -1030,18 +1039,18 @@ namespace dt {
 		}
 	}
 
-	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<RGB, 2> &m)
+	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<fRGB, 2> &m)
 	{
-		dope::DopeVector<RGB, 1> mm;
+		dope::DopeVector<fRGB, 1> mm;
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < m.sizeAt(0); ++q) {
 			m.at(q, mm);
 			element_wiseSquareRoot(mm);
 		}
 	}
 
-	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<RGBA, 2> &m)
+	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<fRGBA, 2> &m)
 	{
-		dope::DopeVector<RGBA, 1> mm;
+		dope::DopeVector<fRGBA, 1> mm;
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < m.sizeAt(0); ++q) {
 			m.at(q, mm);
 			element_wiseSquareRoot(mm);
@@ -1057,24 +1066,24 @@ namespace dt {
 			m[q] = static_cast<Scalar>(std::sqrt(m[q]));
 	}
 
-	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<RGB, 1> &m)
+	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<fRGB, 1> &m)
 	{
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < m.sizeAt(0); ++q)
 		{
 			for (dope::SizeType i=0; i < 3; ++i)
 			{
-				m[q][i] = static_cast<unsigned char>(std::sqrt(m[q][i]));
+				m[q][i] = static_cast<float>(std::sqrt(m[q][i]));
 			}
 		}
 	}
 
-	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<RGBA, 1> &m)
+	inline void DistanceTransform::element_wiseSquareRoot(dope::DopeVector<fRGBA, 1> &m)
 	{
 		for (dope::SizeType q = static_cast<dope::SizeType>(0); q < m.sizeAt(0); ++q)
 		{
 			for (dope::SizeType i = 0; i < 4; ++i)
 			{
-				m[q][i] = static_cast<unsigned char>(std::sqrt(m[q][i]));
+				m[q][i] = static_cast<float>(std::sqrt(m[q][i]));
 			}
 		}
 	}

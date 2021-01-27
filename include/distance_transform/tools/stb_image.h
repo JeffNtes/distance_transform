@@ -922,8 +922,9 @@ static int      stbi__gif_info(stbi__context *s, int *x, int *y, int *comp);
 
 #ifndef STBI_NO_PNM
 static int      stbi__pnm_test(stbi__context *s);
+static stbi_uc *stbi_pnm_p4_data_format(stbi_uc *s, int size, int w, int h);
 static void    *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri);
-static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp);
+static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp, int &pnm_type);
 #endif
 
 static
@@ -1625,6 +1626,33 @@ static int stbi__getn(stbi__context *s, stbi_uc *buffer, int n)
       return 1;
    } else
       return 0;
+}
+
+static int stbi__getn_ex(stbi__context *s, stbi_uc *buffer, int n, int *len)
+{
+	if (s->io.read) {
+		int blen = (int)(s->img_buffer_end - s->img_buffer);
+		if (blen < n) {
+			int res, count;
+
+			memcpy(buffer, s->img_buffer, blen);
+
+			count = (s->io.read)(s->io_user_data, (char*)buffer + blen, n - blen);
+			res = (count == (n - blen));
+			s->img_buffer = s->img_buffer_end;
+			*len = count + blen;
+			return res;
+		}
+   }
+
+	if (s->img_buffer + n <= s->img_buffer_end) {
+		memcpy(buffer, s->img_buffer, n);
+		s->img_buffer += n;
+		*len = n;
+		return 1;
+	}
+	else
+		return 0;
 }
 #endif
 
@@ -7290,24 +7318,60 @@ static int stbi__pic_info(stbi__context *s, int *x, int *y, int *comp)
 
 #ifndef STBI_NO_PNM
 
+enum
+{
+	STBI_pnm_unknown,
+	STBI_pnm_p4,
+	STBI_pnm_p5,
+	STBI_pnm_p6,
+};
+
 static int      stbi__pnm_test(stbi__context *s)
 {
    char p, t;
    p = (char) stbi__get8(s);
    t = (char) stbi__get8(s);
-   if (p != 'P' || (t != '5' && t != '6')) {
+   if (p != 'P' || (t != '4' && t != '5' && t != '6')) {
        stbi__rewind( s );
        return 0;
    }
    return 1;
 }
 
+static stbi_uc *stbi_pnm_p4_data_format(stbi_uc *s, int size, int w, int h)
+{
+	stbi_uc *out = (stbi_uc *)stbi__malloc_mad3(1, w, h, 0);
+	int offset = 0;
+
+	for (int i = 0; i < h; ++i)
+	{
+		unsigned char c = 0;
+		int bitshift = -1;
+		for (int pos = 0; pos < w; pos++) {
+			if (bitshift == -1) {
+				if (offset < size)
+					c = *(s + offset++);
+				else
+					c = 0;
+				bitshift = 7;
+			}
+			out[i*w + pos] = (c >> bitshift) & 1;
+			bitshift--;
+		}
+	}
+
+	STBI_FREE((void*)s);
+	return out;
+}
+
 static void *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req_comp, stbi__result_info *ri)
 {
    stbi_uc *out;
+   int pnm_type = STBI_pnm_unknown;
+   int size = 0;
    STBI_NOTUSED(ri);
 
-   if (!stbi__pnm_info(s, (int *)&s->img_x, (int *)&s->img_y, (int *)&s->img_n))
+   if (!stbi__pnm_info(s, (int *)&s->img_x, (int *)&s->img_y, (int *)&s->img_n, pnm_type))
       return 0;
 
    if (s->img_y > STBI_MAX_DIMENSIONS) return stbi__errpuc("too large","Very large image (corrupt?)");
@@ -7322,7 +7386,13 @@ static void *stbi__pnm_load(stbi__context *s, int *x, int *y, int *comp, int req
 
    out = (stbi_uc *) stbi__malloc_mad3(s->img_n, s->img_x, s->img_y, 0);
    if (!out) return stbi__errpuc("outofmem", "Out of memory");
-   stbi__getn(s, out, s->img_n * s->img_x * s->img_y);
+
+   stbi__getn_ex(s, out, s->img_n * s->img_x * s->img_y, &size);
+
+   if (pnm_type == STBI_pnm_p4)
+   {
+	   out = stbi_pnm_p4_data_format(out, size, s->img_x, s->img_y);
+   }
 
    if (req_comp && req_comp != s->img_n) {
       out = stbi__convert_format(out, s->img_n, req_comp, s->img_x, s->img_y);
@@ -7367,7 +7437,7 @@ static int      stbi__pnm_getinteger(stbi__context *s, char *c)
    return value;
 }
 
-static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)
+static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp, int &pnm_type)
 {
    int maxv, dummy;
    char c, p, t;
@@ -7381,7 +7451,7 @@ static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)
    // Get identifier
    p = (char) stbi__get8(s);
    t = (char) stbi__get8(s);
-   if (p != 'P' || (t != '5' && t != '6')) {
+   if (p != 'P' || (t != '4' && t != '5' && t != '6')) {
        stbi__rewind(s);
        return 0;
    }
@@ -7396,6 +7466,16 @@ static int      stbi__pnm_info(stbi__context *s, int *x, int *y, int *comp)
 
    *y = stbi__pnm_getinteger(s, &c); // read height
    stbi__pnm_skip_whitespace(s, &c);
+
+   if (p == 'P' && t == '4')
+   {
+	   pnm_type = STBI_pnm_p4;
+	   return 1;
+   }
+   else if ( t == '5')
+	   pnm_type = STBI_pnm_p5;
+   else if (t == '6')
+	   pnm_type = STBI_pnm_p6;
 
    maxv = stbi__pnm_getinteger(s, &c);  // read max value
 
@@ -7433,7 +7513,8 @@ static int stbi__info_main(stbi__context *s, int *x, int *y, int *comp)
    #endif
 
    #ifndef STBI_NO_PNM
-   if (stbi__pnm_info(s, x, y, comp))  return 1;
+   int pnm_type = STBI_pnm_unknown;
+   if (stbi__pnm_info(s, x, y, comp, pnm_type))  return 1;
    #endif
 
    #ifndef STBI_NO_HDR
