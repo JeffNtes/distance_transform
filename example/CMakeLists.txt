@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
-project(distance_transform_example)
+project(sdf_tools)
 
 
 
