@@ -25,7 +25,7 @@ namespace dt {
 				const sScaler &u = s[idx];
 				dScaler &f = d[idx];
 
-				if (u == 1)
+				if (u == 0)
 					f = 0.0f;
 			}
 		}
@@ -43,7 +43,7 @@ namespace dt {
 
 				for (dope::SizeType k=static_cast<dope::SizeType>(0); k < static_cast<dope::SizeType>(3); ++k)
 				{
-					if (u[k] != 0)
+					if (u[k] == 0)
 						f[k] = 0.0f;
 				}
 			}
@@ -62,7 +62,7 @@ namespace dt {
 
 				for (dope::SizeType k = static_cast<dope::SizeType>(0); k < static_cast<dope::SizeType>(4); ++k)
 				{
-					if (u[k] != 0)
+					if (u[k] == 0)
 						f[k] = 0.0f;
 				}
 			}
@@ -136,9 +136,9 @@ namespace dt {
 	}
 
 	template<typename sScaler, typename dScaler>
-	void convertEDTFloatToUcharImage(const DopeVector<sScaler, 2> &s, DopeVector<dScaler, 2> &d, const sScaler &min, const sScaler &max)
+	void convertEDTFloatToUcharImage(const DopeVector<sScaler, 2> &s, DopeVector<dScaler, 2> &d)
 	{
-		sScaler scale = std::numeric_limits<dScaler>::max() / (max - min);
+		sScaler edge_val = std::numeric_limits<dScaler>::max() / 2.0;
 
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < d.sizeAt(1); ++i)
 		{
@@ -147,16 +147,16 @@ namespace dt {
 				const sScaler &f = s[i][j];
 				dScaler &u = d[i][j];
 
-				dScaler val = (dScaler)((f - min) * scale);
+				dScaler val = (dScaler)(edge_val + f);
 				u = bound(val, static_cast<dScaler>(0), std::numeric_limits<dScaler>::max());
 			}
 		}
 	}
 
 	template<typename Scaler>
-	void convertEDTFloatToUcharImage(const DopeVector<Scaler, 2> &s, DopeVector<RGB, 2> &d, const Scaler &min, const Scaler &max)
+	void convertEDTFloatToUcharImage(const DopeVector<Scaler, 2> &s, DopeVector<RGB, 2> &d)
 	{
-		Scaler scale = 0xff / (max - min);
+		Scaler edge_val = std::numeric_limits<unsigned char>::max() / 2.0;
 
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < d.sizeAt(1); ++i)
 		{
@@ -166,20 +166,16 @@ namespace dt {
 				const Scaler &f = s[idx];
 				RGB &u = d[idx];
 				
-				unsigned char val = (unsigned char)((f - min) * scale);
+				unsigned char val = (unsigned char)(edge_val + f);
 				val = bound(val, static_cast<unsigned char>(0), std::numeric_limits<unsigned char>::max());
 				u.extend(val);
 			}
 		}
 	}
 
-	void convertEDTFloatToUcharImage(const DopeVector<fRGB, 2> &s, DopeVector<RGB, 2> &d, const fRGB &min, const fRGB &max)
+	void convertEDTFloatToUcharImage(const DopeVector<fRGB, 2> &s, DopeVector<RGB, 2> &d)
 	{
-		fRGB scale(1.0);
-		for (dope::SizeType k = static_cast<dope::SizeType>(0); k < static_cast<dope::SizeType>(3); ++k)
-		{
-			scale[k] = 0xff / (max[k] - min[k]);
-		}
+		float edge_val = std::numeric_limits<unsigned char>::max() / 2.0;
 
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < d.sizeAt(1); ++i)
 		{
@@ -191,20 +187,16 @@ namespace dt {
 
 				for (dope::SizeType k = static_cast<dope::SizeType>(0); k < static_cast<dope::SizeType>(3); ++k)
 				{
-					unsigned char val = (unsigned char)((f[k] - min[k]) * scale[k]);
+					unsigned char val = (unsigned char)(edge_val + f[k]);
 					u[k] = bound(val, static_cast<unsigned char>(0), std::numeric_limits<unsigned char>::max());
 				}
 			}
 		}
 	}
 
-	void convertEDTFloatToUcharImage(const DopeVector<fRGBA, 2> &s, DopeVector<RGBA, 2> &d, const fRGBA &min, const fRGBA &max)
+	void convertEDTFloatToUcharImage(const DopeVector<fRGBA, 2> &s, DopeVector<RGBA, 2> &d)
 	{
-		fRGBA scale(1.0);
-		for (dope::SizeType k = static_cast<dope::SizeType>(0); k < static_cast<dope::SizeType>(4); ++k)
-		{
-			scale[k] = 0xff / (max[k] - min[k]);
-		}
+		float edge_val = std::numeric_limits<unsigned char>::max() / 2.0;
 
 		for (dope::SizeType i = static_cast<dope::SizeType>(0); i < d.sizeAt(1); ++i)
 		{
@@ -216,7 +208,7 @@ namespace dt {
 
 				for (dope::SizeType k = static_cast<dope::SizeType>(0); k < static_cast<dope::SizeType>(4); ++k)
 				{
-					unsigned char val = (unsigned char)((f[k] - min[k]) * scale[k]);
+					unsigned char val = (unsigned char)(edge_val + f[k]);
 					u[k] = bound(val, static_cast<unsigned char>(0), std::numeric_limits<unsigned char>::max());
 				}
 			}
@@ -256,10 +248,7 @@ namespace dt {
 			DistanceTransform::distanceTransformL2(fImage, fImage, false, threads);
 			std::cout << std::endl << "image: width("<< x << ") height("<< y << ") channel("<< n << ")->" << inFile << std::endl << "distance function (concurrently) computed in: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << " ms. (with " << threads << " threads)." << std::endl;
 
-			fRGB min(std::numeric_limits<float>::max()), max(-std::numeric_limits<float>::max());
-			caculateEDTImageMinMax(fImage, min, max);
-
-			convertEDTFloatToUcharImage(fImage, uImage, min, max);
+			convertEDTFloatToUcharImage(fImage, uImage);
 
 		}
 		else if (n == 4 )
@@ -274,10 +263,7 @@ namespace dt {
 			DistanceTransform::distanceTransformL2(fImage, fImage, false, threads);
 			std::cout << std::endl << "image: width(" << x << ") height(" << y << ") channel(" << n << ")->" << inFile << std::endl << "distance function (concurrently) computed in: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << " ms. (with " << threads << " threads)." << std::endl;
 
-			fRGBA min(std::numeric_limits<float>::max()), max(-std::numeric_limits<float>::max());
-			caculateEDTImageMinMax(fImage, min, max);
-
-			convertEDTFloatToUcharImage(fImage, uImage, min, max);
+			convertEDTFloatToUcharImage(fImage, uImage);
 		}
 		else if (n == 1)
 		{
@@ -291,15 +277,12 @@ namespace dt {
 			DistanceTransform::distanceTransformL2(fImage, fImage, false, threads);
 			std::cout << std::endl << "image: width(" << x << ") height(" << y << ") channel(" << n << ")->" << inFile << std::endl << "distance function (concurrently) computed in: " << std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count() << " ms. (with " << threads << " threads)." << std::endl;
 
-			float min= std::numeric_limits<float>::max(), max= -std::numeric_limits<float>::max();
-			caculateEDTImageMinMax(fImage, min, max);
-
 			unsigned char *tempData = (unsigned char*)stbi__malloc(sizeof(RGB)*x*y);
 			stbi_image_free(imgData);
 			imgData = tempData;
 			DopeVector<RGB, 2> tImage((RGB*)imgData, 0, size);
 
-			convertEDTFloatToUcharImage(fImage, tImage, min, max);
+			convertEDTFloatToUcharImage(fImage, tImage);
 		}
 		else
 		{
